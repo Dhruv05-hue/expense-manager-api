@@ -172,7 +172,7 @@ async function addExpenses(req,res){
 
         message:"Expense added successfully",
 
-        expense
+        expense :  formatExpense(expense, req)
 
     })
 

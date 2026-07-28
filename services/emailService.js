@@ -4,7 +4,7 @@ async function sendOTPEmail(email, otp) {
 
     const mailOptions = {
 
-        from: process.env.EMAIL_USER,
+        from: process.env.SENDER_EMAIL,
 
         to: email,
 

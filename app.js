@@ -43,9 +43,6 @@ app.use("/uploads",express.static(path.join(__dirname, "uploads"))
 // whenever the request comes for user route put limiter on it as its for login and sign up
 app.use("/user", limiter);
 
-// Static Files
-app.use("/uploads", express.static("uploads"));
-
 // Routes
 app.use("/expense", expenseRouter);
 app.use("/user", userRouter);
@@ -54,8 +51,10 @@ app.use("/user", userRouter);
 app.use(errorHandler);
 
 // Start Server
-app.listen(process.env.PORT, function () {
+const PORT = process.env.PORT || 3000;
 
-    console.log("Server has started");
+app.listen(PORT, () => {
+
+    console.log(`Server has started on port ${PORT}`);
 
 });

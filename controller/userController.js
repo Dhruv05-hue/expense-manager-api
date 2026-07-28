@@ -40,7 +40,8 @@ async function signup(req, res) {
 
     return res.status(201).json({
          success: true,
-         message: "Registration successful. Please verify your email."
+         message: "Registration successful. Please verify your email.",
+         email : user.email
     });
 }
 
@@ -81,12 +82,18 @@ async function login(req, res) {
             id: user._id
         },
         process.env.JWT_SECRET
+        
     );
 
     return res.status(200).json({
         success: true,
         message: "Login successful.",
-        token
+        token,
+        user:{
+        id:user._id,
+        name:user.name,
+        email:user.email
+    }
     });
 }
 

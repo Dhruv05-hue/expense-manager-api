@@ -1,20 +1,17 @@
-const Expense = require("../model/Expense.js")
-const fs = require("fs");
+const Expense = require("../model/Expense.js");
 const mongoose = require("mongoose");
-const formatExpense = require("../helpers/expenseHelper");
+const cloudinary = require("../config/cloudinary");
 
 async function getExpenses(req, res) {
 
     // ---------------- PAGINATION ----------------
 
-    // Current page (Default = 1)
     let page = Number(req.query.page);
 
     if (isNaN(page) || page < 1) {
         page = 1;
     }
 
-    // Number of documents per page (Default = 5)
     let limit = Number(req.query.limit);
 
     if (isNaN(limit) || limit < 1) {
@@ -25,13 +22,10 @@ async function getExpenses(req, res) {
         limit = 100;
     }
 
-    // Skip documents of previous pages
     const skip = (page - 1) * limit;
-
 
     // ---------------- SORTING ----------------
 
-    // Field to sort by (Default = createdAt)
     let sort = req.query.sort || "createdAt";
 
     const allowedSortFields = [
@@ -44,7 +38,6 @@ async function getExpenses(req, res) {
         sort = "createdAt";
     }
 
-    // Sort order (Default = descending)
     let order = req.query.order || "desc";
 
     const allowedOrder = [
@@ -56,60 +49,40 @@ async function getExpenses(req, res) {
         order = "desc";
     }
 
-    // Dynamic sort object
-    // Example:
-    // { amount: -1 }
-    // { createdAt: 1 }
     const sortObj = {};
 
-    sortObj[sort] = order === "asc" ? 1 : -1
-
+    sortObj[sort] = order === "asc" ? 1 : -1;
 
     // ---------------- FILTERING ----------------
 
-    // Base filter:
-    // Always return only logged-in user's expenses
     const filter = {
         user: req.user.id
     };
 
-    // Optional filter
-    // Example:
-    // GET /expenses?minAmount=1000
-
-    const amountFilter = {}
+    const amountFilter = {};
 
     if (req.query.minAmount !== undefined) {
 
         const minAmount = Number(req.query.minAmount);
 
-        if(!isNaN(minAmount)){
-
-        amountFilter.$gte = minAmount
-
+        if (!isNaN(minAmount)) {
+            amountFilter.$gte = minAmount;
         }
     }
 
-    if(req.query.maxAmount !== undefined){
+    if (req.query.maxAmount !== undefined) {
 
-        const maxAmount = Number(req.query.maxAmount)
+        const maxAmount = Number(req.query.maxAmount);
 
-        if(!isNaN(maxAmount)){
-
-            amountFilter.$lte = maxAmount
-
+        if (!isNaN(maxAmount)) {
+            amountFilter.$lte = maxAmount;
         }
-
-
     }
 
-    // only add amount filter if one of max and min amount are present in amountFilter 
-    if (Object.keys(amountFilter).length > 0) { // it  the length of amountFilter object if both min and max are missing it will not be added to filter
-
+    if (Object.keys(amountFilter).length > 0) {
         filter.amount = amountFilter;
-
     }
-     
+
     if (req.query.search) {
 
         filter.name = {
@@ -122,171 +95,188 @@ async function getExpenses(req, res) {
 
     }
 
-
-    // Count documents AFTER applying filters
-    // Needed for correct pagination
     const totalExpenses = await Expense.countDocuments(filter);
 
-    // Calculate total pages
     const totalPages = Math.ceil(totalExpenses / limit);
 
-
-    // Fetch expenses
     const expenses = await Expense.find(filter)
         .sort(sortObj)
         .skip(skip)
         .limit(limit);
-        
-
 
     res.status(200).json({
+
         success: true,
+
         message: "Expenses fetched successfully",
+
         totalExpenses,
+
         totalPages,
+
         page,
+
         limit,
-        expenses: expenses.map(expense =>formatExpense(expense, req))
+
+        expenses
+
     });
 
 }
 
-
-async function addExpenses(req,res){
-    
-
-    
+async function addExpenses(req, res) {
 
     const expense = new Expense({
 
-        name : req.body.name,
-        amount : req.body.amount,
+        name: req.body.name,
+
+        amount: req.body.amount,
+
         receipt: req.file ? req.file.path : null,
-        user : req.user.id
-    })
+
+        receiptPublicId: req.file ? req.file.filename : null,
+
+        user: req.user.id
+
+    });
 
     await expense.save();
+
     res.status(201).json({
 
-        success:true,
+        success: true,
 
-        message:"Expense added successfully",
+        message: "Expense added successfully",
 
-        expense :  formatExpense(expense, req)
+        expense
 
-    })
-
-}
- 
-
-
-async function getExpensesbyid(req,res){
-       
-           const data = await Expense.findOne({
-
-               _id : req.params.id,
-               user : req.user.id
-           })
-           if(!data){
-            return  res.status(404).json({
-
-                        success:false,
-
-                        message:"Expense not found"
-
-                    });
-           }
-           res.status(200).json({
-
-                success:true,
-
-                expense: formatExpense(data, req)
-
-            });
-        
-        
+    });
 
 }
 
-async function updateExpenses(req,res){
-             
-      
+async function getExpensesbyid(req, res) {
 
-            const data = await Expense.findOne({
+    const expense = await Expense.findOne({
 
-                _id : req.params.id,
-                user : req.user.id
+        _id: req.params.id,
 
-            })
-            if(!data){
-                
-               return res.status(404).json({
+        user: req.user.id
 
-                        success:false,
+    });
 
-                        message:"Expense not found"
+    if (!expense) {
 
-                    });
+        return res.status(404).json({
 
-            }
+            success: false,
 
-            
+            message: "Expense not found"
 
-            data.name = req.body.name;
-            data.amount = req.body.amount;
-            if (req.file) {
-                data.receipt = req.file.path;
-            }
-            
-            await data.save()
-            res.status(200).json({
+        });
 
-                success:true,
+    }
 
-                message:"Expense updated successfully",
+    res.status(200).json({
 
-                expense: formatExpense(data, req)
+        success: true,
 
-            });
+        expense
 
-             
+    });
+
 }
 
-async function deleteExpenses(req,res){
+async function updateExpenses(req, res) {
 
-    
+    const expense = await Expense.findOne({
 
-        const data = await Expense.findOne({
+        _id: req.params.id,
 
-            _id : req.params.id,
-            user : req.user.id
-        })
-        if(!data){
-            return res.status(404).json({
+        user: req.user.id
 
-                        success:false,
+    });
 
-                        message:"Expense not found"
+    if (!expense) {
 
-                    });
-        }
+        return res.status(404).json({
 
-        if (data.receipt && fs.existsSync(data.receipt)) {
+            success: false,
 
-            fs.unlinkSync(data.receipt);
+            message: "Expense not found"
+
+        });
+
+    }
+
+    expense.name = req.body.name;
+
+    expense.amount = req.body.amount;
+
+    if (req.file) {
+
+        if (expense.receiptPublicId) {
+
+            await cloudinary.uploader.destroy(expense.receiptPublicId);
 
         }
 
-        await data.deleteOne()
-        res.status(200).json({
+        expense.receipt = req.file.path;
 
-                success:true,
+        expense.receiptPublicId = req.file.filename;
 
-                message:"Expense deleted successfully"
+    }
 
-            });
+    await expense.save();
 
-    
+    res.status(200).json({
+
+        success: true,
+
+        message: "Expense updated successfully",
+
+        expense
+
+    });
+
+}
+
+async function deleteExpenses(req, res) {
+
+    const expense = await Expense.findOne({
+
+        _id: req.params.id,
+
+        user: req.user.id
+
+    });
+
+    if (!expense) {
+
+        return res.status(404).json({
+
+            success: false,
+
+            message: "Expense not found"
+
+        });
+
+    }
+
+    if (expense.receiptPublicId) {
+
+        await cloudinary.uploader.destroy(expense.receiptPublicId);
+
+    }
+
+    await expense.deleteOne();
+
+    res.status(200).json({
+
+        success: true,
+
+        message: "Expense deleted successfully"
+
+    });
 
 }
 
@@ -339,7 +329,7 @@ async function dashboard(req, res) {
 
                     {
                         $sort: {
-                            createdAt: -1   
+                            createdAt: -1
                         }
                     },
 
@@ -354,21 +344,19 @@ async function dashboard(req, res) {
 
     ]);
 
-    // Convert statistics array into a single object
-    dashboard[0].statistics =
-        dashboard[0].statistics[0] || {
+    dashboard[0].statistics = dashboard[0].statistics[0] || {
 
-            totalExpenses: 0,
+        totalExpenses: 0,
 
-            totalAmount: 0,
+        totalAmount: 0,
 
-            averageExpense: 0,
+        averageExpense: 0,
 
-            highestExpense: 0,
+        highestExpense: 0,
 
-            lowestExpense: 0
+        lowestExpense: 0
 
-        };
+    };
 
     res.status(200).json({
 
@@ -383,10 +371,17 @@ async function dashboard(req, res) {
 }
 
 module.exports = {
+
     getExpenses,
+
     addExpenses,
+
     getExpensesbyid,
+
     updateExpenses,
+
     deleteExpenses,
+
     dashboard
+
 };

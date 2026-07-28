@@ -7,11 +7,10 @@ const expenseSchema = new mongoose.Schema({
 
         type: String,
 
-        // Name is compulsory
         required: true,
 
-        // Removes spaces from beginning and end
         trim: true
+
     },
 
     amount: {
@@ -20,41 +19,52 @@ const expenseSchema = new mongoose.Schema({
 
         required: true,
 
-        // Amount cannot be 0 or negative
         min: 1
+
     },
 
-    receipt : {
+    // Cloudinary Image URL
+    receipt: {
 
-        type : String,
-        
+        type: String,
+
+        default: null
+
+    },
+
+    // Cloudinary Public ID
+    receiptPublicId: {
+
+        type: String,
+
+        default: null
 
     },
 
     user: {
 
-        // Creates relationship with User collection
         type: mongoose.Schema.Types.ObjectId,
 
-        // Reference to User model
         ref: "User",
 
         required: true
+
     }
 
 },
 {
 
-    // Automatically creates:
-    // createdAt
-    // updatedAt
     timestamps: true
 
 });
 
+// Index for fast queries
 expenseSchema.index({
+
     user: 1,
+
     createdAt: -1
+
 });
 
 const Expense = mongoose.model("Expense", expenseSchema);

@@ -6,7 +6,6 @@ const helmet = require("helmet");
 const cors = require("cors");
 const mongoSanitize = require("express-mongo-sanitize");
 const rateLimit = require("express-rate-limit");
-const path = require("path");
 const expenseRouter = require("./router/expenseRoute.js");
 const userRouter = require("./router/userRouter.js");
 const connect_db = require("./config/db.js");
@@ -41,8 +40,6 @@ const limiter = rateLimit({
 
 });
 
-app.use("/uploads",express.static(path.join(__dirname, "uploads"))
-);
 // whenever the request comes for user route put limiter on it as its for login and sign up
 app.use("/user", limiter);
 

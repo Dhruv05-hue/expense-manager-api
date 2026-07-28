@@ -15,4 +15,12 @@ const transporter = nodemailer.createTransport({
 
 });
 
+transporter.verify((error, success) => {
+    if (error) {
+        console.error("Mailer verification failed:", error);
+    } else {
+        console.log("Mailer is ready.");
+    }
+});
+
 module.exports = transporter;

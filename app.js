@@ -13,12 +13,13 @@ const errorHandler = require("./middleware/errorHandler.js");
 
 
 const app = express();
-
+app.set("trust proxy", 1);
 // Connect Database
 connect_db();
 
 // Parse JSON
 app.use(express.json());
+
 
 // Security Middleware
 app.use(helmet());

@@ -265,11 +265,102 @@ async function resetPassword(req, res) {
 
 }
 
+async function getProfile(req, res) {
+    const user = await User.findById(req.user.id).select(
+        "-password -otp -otpExpires"
+    );
+
+    if (!user) {
+        return res.status(404).json({
+            success: false,
+            message: "User not found"
+        });
+    }
+
+    return res.status(200).json({
+        success: true,
+        user
+    });
+}
+
+async function updateProfile(req, res) {
+    const { name, phone, profession } = req.body;
+
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+        return res.status(404).json({
+            success: false,
+            message: "User not found"
+        });
+    }
+
+    user.name = name;
+    user.phone = phone;
+    user.profession = profession;
+
+    await user.save();
+
+    return res.status(200).json({
+        success: true,
+        message: "Profile updated successfully.",
+        user
+    });
+}
+
+async function changePassword(req, res) {
+    const { currentPassword, newPassword } = req.body;
+
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+        return res.status(404).json({
+            success: false,
+            message: "User not found"
+        });
+    }
+
+    const isMatch = await bcrypt.compare(
+        currentPassword,
+        user.password
+    );
+
+    if (!isMatch) {
+        return res.status(400).json({
+            success: false,
+            message: "Current password is incorrect"
+        });
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+
+    await user.save();
+
+    return res.status(200).json({
+        success: true,
+        message: "Password changed successfully."
+    });
+}
+
+async function deleteAccount(req, res) {
+    await User.findByIdAndDelete(req.user.id);
+
+    return res.status(200).json({
+        success: true,
+        message: "Account deleted successfully."
+    });
+}
+
 module.exports = {
     signup,
     login,
     verifyOTP,
     resendOTP,
     forgotPassword,
-    resetPassword
+    resetPassword,
+
+    getProfile,
+    updateProfile,
+    changePassword,
+    deleteAccount
 };

@@ -8,10 +8,10 @@ const expenseSchema = Joi.object({
         .max(30)
         .required()
         .messages({
-            "string.empty": "Name is required",
-            "string.min": "Name must be at least 2 characters long",
-            "string.max": "Name cannot exceed 30 characters",
-            "any.required": "Name is required"
+            "string.empty": "Expense name is required",
+            "string.min": "Expense name must be at least 2 characters long",
+            "string.max": "Expense name cannot exceed 30 characters",
+            "any.required": "Expense name is required"
         }),
 
     amount: Joi.number()
@@ -20,9 +20,31 @@ const expenseSchema = Joi.object({
         .required()
         .messages({
             "number.base": "Amount should be a number",
-            "number.min": "Amount should be greater than zero",
+            "number.min": "Amount must be greater than 0",
             "number.max": "Amount cannot exceed 10,000,000",
             "any.required": "Amount is required"
+        }),
+
+    category: Joi.string()
+        .trim()
+        .valid(
+            "Food",
+            "Drinks",
+            "Transport",
+            "Shopping",
+            "Bills",
+            "Entertainment",
+            "Health",
+            "Education",
+            "Travel",
+            "Other"
+        )
+        .required()
+        .messages({
+            "string.empty": "Category is required",
+            "any.only":
+                "Category must be one of Food, Transport, Shopping, Bills, Entertainment, Health, Education, Travel or Other",
+            "any.required": "Category is required"
         })
 
 });
@@ -30,7 +52,11 @@ const expenseSchema = Joi.object({
 function expenseMiddleware(req, res, next) {
 
     const { error } = expenseSchema.validate(req.body, {
-        abortEarly: false
+
+        abortEarly: false,
+
+        stripUnknown: true
+
     });
 
     if (error) {

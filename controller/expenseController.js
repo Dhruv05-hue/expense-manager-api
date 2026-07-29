@@ -2,9 +2,12 @@ const Expense = require("../model/Expense.js");
 const mongoose = require("mongoose");
 const cloudinary = require("../config/cloudinary");
 
+// =========================
+// GET ALL EXPENSES
+// =========================
 async function getExpenses(req, res) {
 
-    // ---------------- PAGINATION ----------------
+    // ---------- Pagination ----------
 
     let page = Number(req.query.page);
 
@@ -24,13 +27,14 @@ async function getExpenses(req, res) {
 
     const skip = (page - 1) * limit;
 
-    // ---------------- SORTING ----------------
+    // ---------- Sorting ----------
 
     let sort = req.query.sort || "createdAt";
 
     const allowedSortFields = [
         "name",
         "amount",
+        "category",
         "createdAt"
     ];
 
@@ -40,12 +44,7 @@ async function getExpenses(req, res) {
 
     let order = req.query.order || "desc";
 
-    const allowedOrder = [
-        "asc",
-        "desc"
-    ];
-
-    if (!allowedOrder.includes(order)) {
+    if (!["asc", "desc"].includes(order)) {
         order = "desc";
     }
 
@@ -53,12 +52,30 @@ async function getExpenses(req, res) {
 
     sortObj[sort] = order === "asc" ? 1 : -1;
 
-    // ---------------- FILTERING ----------------
+    // ---------- Filtering ----------
 
     const filter = {
         user: req.user.id
     };
 
+    // Search by expense name
+    if (req.query.search) {
+
+        filter.name = {
+            $regex: req.query.search,
+            $options: "i"
+        };
+
+    }
+
+    // Category filter
+    if (req.query.category) {
+
+        filter.category = req.query.category;
+
+    }
+
+    // Amount filter
     const amountFilter = {};
 
     if (req.query.minAmount !== undefined) {
@@ -68,6 +85,7 @@ async function getExpenses(req, res) {
         if (!isNaN(minAmount)) {
             amountFilter.$gte = minAmount;
         }
+
     }
 
     if (req.query.maxAmount !== undefined) {
@@ -77,21 +95,12 @@ async function getExpenses(req, res) {
         if (!isNaN(maxAmount)) {
             amountFilter.$lte = maxAmount;
         }
+
     }
 
     if (Object.keys(amountFilter).length > 0) {
+
         filter.amount = amountFilter;
-    }
-
-    if (req.query.search) {
-
-        filter.name = {
-
-            $regex: req.query.search,
-
-            $options: "i"
-
-        };
 
     }
 
@@ -104,7 +113,7 @@ async function getExpenses(req, res) {
         .skip(skip)
         .limit(limit);
 
-    res.status(200).json({
+    return res.status(200).json({
 
         success: true,
 
@@ -124,6 +133,10 @@ async function getExpenses(req, res) {
 
 }
 
+// =========================
+// ADD EXPENSE
+// =========================
+
 async function addExpenses(req, res) {
 
     const expense = new Expense({
@@ -131,6 +144,8 @@ async function addExpenses(req, res) {
         name: req.body.name,
 
         amount: req.body.amount,
+
+        category: req.body.category,
 
         receipt: req.file ? req.file.path : null,
 
@@ -142,7 +157,7 @@ async function addExpenses(req, res) {
 
     await expense.save();
 
-    res.status(201).json({
+    return res.status(201).json({
 
         success: true,
 
@@ -153,6 +168,10 @@ async function addExpenses(req, res) {
     });
 
 }
+
+// =========================
+// GET EXPENSE BY ID
+// =========================
 
 async function getExpensesbyid(req, res) {
 
@@ -176,7 +195,7 @@ async function getExpensesbyid(req, res) {
 
     }
 
-    res.status(200).json({
+    return res.status(200).json({
 
         success: true,
 
@@ -185,6 +204,10 @@ async function getExpensesbyid(req, res) {
     });
 
 }
+
+// =========================
+// UPDATE EXPENSE
+// =========================
 
 async function updateExpenses(req, res) {
 
@@ -212,11 +235,15 @@ async function updateExpenses(req, res) {
 
     expense.amount = req.body.amount;
 
+    expense.category = req.body.category;
+
     if (req.file) {
 
         if (expense.receiptPublicId) {
 
-            await cloudinary.uploader.destroy(expense.receiptPublicId);
+            await cloudinary.uploader.destroy(
+                expense.receiptPublicId
+            );
 
         }
 
@@ -228,7 +255,7 @@ async function updateExpenses(req, res) {
 
     await expense.save();
 
-    res.status(200).json({
+    return res.status(200).json({
 
         success: true,
 
@@ -239,6 +266,10 @@ async function updateExpenses(req, res) {
     });
 
 }
+
+// =========================
+// DELETE EXPENSE
+// =========================
 
 async function deleteExpenses(req, res) {
 
@@ -264,13 +295,15 @@ async function deleteExpenses(req, res) {
 
     if (expense.receiptPublicId) {
 
-        await cloudinary.uploader.destroy(expense.receiptPublicId);
+        await cloudinary.uploader.destroy(
+            expense.receiptPublicId
+        );
 
     }
 
     await expense.deleteOne();
 
-    res.status(200).json({
+    return res.status(200).json({
 
         success: true,
 
@@ -279,6 +312,10 @@ async function deleteExpenses(req, res) {
     });
 
 }
+
+// =========================
+// DASHBOARD
+// =========================
 
 async function dashboard(req, res) {
 
@@ -292,6 +329,10 @@ async function dashboard(req, res) {
 
         {
             $facet: {
+
+                // =========================
+                // SUMMARY STATISTICS
+                // =========================
 
                 statistics: [
 
@@ -308,22 +349,26 @@ async function dashboard(req, res) {
                                 $sum: "$amount"
                             },
 
-                            averageExpense: {
-                                $avg: "$amount"
-                            },
-
                             highestExpense: {
                                 $max: "$amount"
                             },
 
                             lowestExpense: {
                                 $min: "$amount"
+                            },
+
+                            averageExpense: {
+                                $avg: "$amount"
                             }
 
                         }
                     }
 
                 ],
+
+                // =========================
+                // RECENT EXPENSES
+                // =========================
 
                 latestExpenses: [
 
@@ -337,9 +382,102 @@ async function dashboard(req, res) {
                         $limit: 5
                     }
 
+                ],
+
+                // =========================
+                // MONTHLY EXPENSES
+                // =========================
+
+                monthlyExpenses: [
+
+                    {
+                        $group: {
+
+                            _id: {
+                                year: {
+                                    $year: "$createdAt"
+                                },
+                                month: {
+                                    $month: "$createdAt"
+                                }
+                            },
+
+                            totalAmount: {
+                                $sum: "$amount"
+                            }
+
+                        }
+                    },
+
+                    {
+                        $sort: {
+                            "_id.year": 1,
+                            "_id.month": 1
+                        }
+                    },
+
+                    {
+                        $project: {
+
+                            _id: 0,
+
+                            year: "$_id.year",
+
+                            month: "$_id.month",
+
+                            totalAmount: 1
+
+                        }
+                    }
+
+                ],
+
+                // =========================
+                // CATEGORY EXPENSES
+                // =========================
+
+                categoryExpenses: [
+
+                    {
+                        $group: {
+
+                            _id: "$category",
+
+                            totalAmount: {
+                                $sum: "$amount"
+                            },
+
+                            totalExpenses: {
+                                $sum: 1
+                            }
+
+                        }
+                    },
+
+                    {
+                        $sort: {
+                            totalAmount: -1
+                        }
+                    },
+
+                    {
+                        $project: {
+
+                            _id: 0,
+
+                            category: "$_id",
+
+                            totalAmount: 1,
+
+                            totalExpenses: 1
+
+                        }
+                    }
+
                 ]
 
             }
+
         }
 
     ]);
@@ -350,15 +488,15 @@ async function dashboard(req, res) {
 
         totalAmount: 0,
 
-        averageExpense: 0,
-
         highestExpense: 0,
 
-        lowestExpense: 0
+        lowestExpense: 0,
+
+        averageExpense: 0
 
     };
 
-    res.status(200).json({
+    return res.status(200).json({
 
         success: true,
 
@@ -369,6 +507,7 @@ async function dashboard(req, res) {
     });
 
 }
+
 
 module.exports = {
 

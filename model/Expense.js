@@ -41,6 +41,23 @@ const expenseSchema = new mongoose.Schema({
 
     },
 
+    category: {
+        type: String,
+        required: true,
+        trim : true,
+        enum: [
+            "Food",
+            "Transport",
+            "Shopping",
+            "Bills",
+            "Entertainment",
+            "Health",
+            "Education",
+            "Travel",
+            "Other"
+        ]
+    },
+
     user: {
 
         type: mongoose.Schema.Types.ObjectId,
@@ -65,6 +82,11 @@ expenseSchema.index({
 
     createdAt: -1
 
+});
+
+expenseSchema.index({
+    user: 1,
+    category: 1
 });
 
 const Expense = mongoose.model("Expense", expenseSchema);

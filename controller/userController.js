@@ -23,12 +23,14 @@ async function signup(req, res) {
     const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
 
     const user = new User({
-        name: req.body.name,
-        email: req.body.email,
-        password: hashedPassword,
-        otp: otp.toString(),
-        otpExpires: otpExpires
-    });
+    name: req.body.name,
+    email: req.body.email,
+    password: hashedPassword,
+    phone: req.body.phone,
+    profession: req.body.profession,
+    otp: otp.toString(),
+    otpExpires: otpExpires
+});
 
     await user.save();
 

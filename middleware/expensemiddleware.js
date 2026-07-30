@@ -45,6 +45,15 @@ const expenseSchema = Joi.object({
             "any.only":
                 "Category must be one of Food, Transport, Shopping, Bills, Entertainment, Health, Education, Travel or Other",
             "any.required": "Category is required"
+        }),
+
+    description: Joi.string()
+        .trim()
+        .max(200)
+        .allow("")
+        .optional()
+        .messages({
+            "string.max": "Description cannot exceed 200 characters"
         })
 
 });

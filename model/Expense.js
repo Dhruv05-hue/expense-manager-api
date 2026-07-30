@@ -58,6 +58,13 @@ const expenseSchema = new mongoose.Schema({
         ]
     },
 
+    description: {
+        type: String,
+        trim: true,
+        maxlength: 200,
+        default: "",
+    },
+
     user: {
 
         type: mongoose.Schema.Types.ObjectId,

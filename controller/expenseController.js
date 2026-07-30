@@ -147,6 +147,8 @@ async function addExpenses(req, res) {
 
         category: req.body.category,
 
+        description: req.body.description,
+
         receipt: req.file ? req.file.path : null,
 
         receiptPublicId: req.file ? req.file.filename : null,
@@ -234,6 +236,8 @@ async function updateExpenses(req, res) {
     expense.name = req.body.name;
 
     expense.amount = req.body.amount;
+
+    expense.description = req.body.description;
 
     expense.category = req.body.category;
 

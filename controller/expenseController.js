@@ -153,6 +153,8 @@ async function addExpenses(req, res) {
 
         receiptPublicId: req.file ? req.file.filename : null,
 
+        trip: req.body.trip || null,
+
         user: req.user.id
 
     });
@@ -240,6 +242,8 @@ async function updateExpenses(req, res) {
     expense.description = req.body.description;
 
     expense.category = req.body.category;
+
+    expense.trip = req.body.trip || expense.trip;
 
     if (req.file) {
 

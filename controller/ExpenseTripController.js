@@ -18,7 +18,7 @@ const createTrip = async (req, res) => {
         endDate: req.body.endDate,
 
         description: req.body.description,
-
+        
         user: req.user.id
 
     });

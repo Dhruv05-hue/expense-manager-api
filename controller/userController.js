@@ -310,15 +310,16 @@ async function updateProfile(req, res) {
     });
 }
 
-async function changePassword(req, res) {
-    const { currentPassword, newPassword } = req.body;
+async function sendChangePasswordOTP(req, res) {
+
+    const { currentPassword } = req.body;
 
     const user = await User.findById(req.user.id);
 
     if (!user) {
         return res.status(404).json({
             success: false,
-            message: "User not found"
+            message: "User not found",
         });
     }
 
@@ -330,17 +331,102 @@ async function changePassword(req, res) {
     if (!isMatch) {
         return res.status(400).json({
             success: false,
-            message: "Current password is incorrect"
+            message: "Current password is incorrect",
         });
     }
 
+    if (
+        user.passwordOtpLastSent &&
+        Date.now() - user.passwordOtpLastSent.getTime() < 60000
+    ) {
+        return res.status(429).json({
+            success: false,
+            message: "Please wait before requesting another OTP.",
+        });
+    }
+
+    const otp = Math.floor(Math.random() * 900000) + 100000;
+
+    user.passwordOtp = otp.toString();
+    user.passwordOtpExpires = new Date(Date.now() + 5 * 60 * 1000);
+    user.passwordOtpAttempts = 0;
+    user.passwordOtpLastSent = new Date();
+
+    await user.save();
+
+    await sendOTPEmail(
+        user.email,
+        otp,
+        "Expense Manager Password Change OTP",
+        "Password Change Verification",
+        "5 minutes"
+    );
+
+    return res.status(200).json({
+        success: true,
+        message: "OTP sent successfully.",
+    });
+}
+
+async function changePassword(req, res) {
+    const { otp, newPassword } = req.body;
+
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+        return res.status(404).json({
+            success: false,
+            message: "User not found",
+        });
+    }
+
+    // Check OTP
+    if (user.passwordOtp !== otp) {
+        user.passwordOtpAttempts += 1;
+        await user.save();
+
+        return res.status(400).json({
+            success: false,
+            message: "Invalid OTP",
+        });
+    }
+
+    // Check OTP Expiry
+    if (user.passwordOtpExpires < new Date()) {
+        return res.status(400).json({
+            success: false,
+            message: "OTP has expired",
+        });
+    }
+
+    // Maximum Attempts
+    if (user.passwordOtpAttempts >= 3) {
+        user.passwordOtp = null;
+        user.passwordOtpExpires = null;
+        user.passwordOtpAttempts = 0;
+
+        await user.save();
+
+        return res.status(400).json({
+            success: false,
+            message: "Maximum OTP attempts exceeded. Please request a new OTP.",
+        });
+    }
+
+    // Update Password
     user.password = await bcrypt.hash(newPassword, 10);
+
+    // Clear OTP
+    user.passwordOtp = null;
+    user.passwordOtpExpires = null;
+    user.passwordOtpAttempts = 0;
+    user.passwordOtpLastSent = null;
 
     await user.save();
 
     return res.status(200).json({
         success: true,
-        message: "Password changed successfully."
+        message: "Password changed successfully.",
     });
 }
 
@@ -363,6 +449,7 @@ module.exports = {
 
     getProfile,
     updateProfile,
+    sendChangePasswordOTP,
     changePassword,
     deleteAccount
 };

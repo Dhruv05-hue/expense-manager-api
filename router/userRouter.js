@@ -20,11 +20,9 @@ router.post("/resetpassword", asyncHandler(userController.resetPassword));
 
 // Profile
 router.get("/profile",authMiddleware,asyncHandler(userController.getProfile));
-
 router.put("/profile",authMiddleware,asyncHandler(userController.updateProfile));
-
+router.post("/change-password/send-otp",authMiddleware, asyncHandler(userController.sendChangePasswordOTP));
 router.put("/change-password",authMiddleware,asyncHandler(userController.changePassword));
-
 router.delete( "/delete",authMiddleware,asyncHandler(userController.deleteAccount));
 
 module.exports = router;

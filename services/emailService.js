@@ -1,37 +1,35 @@
 const transporter = require("../config/mailer");
 
-async function sendOTPEmail(email, otp) {
-
+async function sendOTPEmail(
+    email,
+    otp,
+    subject = "Expense Manager Email Verification",
+    heading = "Email Verification",
+    expiry = "10 minutes"
+) {
     const mailOptions = {
-
         from: process.env.SENDER_EMAIL,
 
         to: email,
 
-        subject: "Expense Manager Email Verification",
-
-        text: `Your OTP is ${otp}`,
+        subject,
 
         html: `
-            <h2>Email Verification</h2>
+            <h2>${heading}</h2>
 
             <p>Your OTP is:</p>
 
             <h1>${otp}</h1>
 
-            <p>This OTP will expire in 10 minutes.</p>
-        `
+            <p>This OTP will expire in ${expiry}.</p>
+
+            <p>If you didn't request this, please ignore this email.</p>
+        `,
     };
 
-    console.log("EMAIL_USER:", process.env.EMAIL_USER);
-    console.log("EMAIL_PASS exists:", !!process.env.EMAIL_PASS);
-
-    const result = await transporter.sendMail(mailOptions);
-
-    console.log(result);
-
+    await transporter.sendMail(mailOptions);
 }
 
 module.exports = {
-    sendOTPEmail
+    sendOTPEmail,
 };

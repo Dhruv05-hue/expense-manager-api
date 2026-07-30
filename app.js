@@ -10,6 +10,7 @@ const expenseRouter = require("./router/expenseRoute.js");
 const userRouter = require("./router/userRouter.js");
 const connect_db = require("./config/db.js");
 const errorHandler = require("./middleware/errorHandler.js");
+const expenseTripRouter = require("./router/expenseTripRouter");
 
 
 
@@ -46,7 +47,7 @@ app.use("/user", limiter);
 // Routes
 app.use("/expense", expenseRouter);
 app.use("/user", userRouter);
-
+app.use("/expense-trip", expenseTripRouter);
 // Global Error Handler
 app.use(errorHandler);
 

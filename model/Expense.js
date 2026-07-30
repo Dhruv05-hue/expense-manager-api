@@ -65,6 +65,12 @@ const expenseSchema = new mongoose.Schema({
         default: "",
     },
 
+    trip: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "ExpenseTrip",
+        default: null,
+    },  
+
     user: {
 
         type: mongoose.Schema.Types.ObjectId,

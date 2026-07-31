@@ -2,10 +2,12 @@
 # 💰 Expense Manager REST API
 
 ![Node.js](https://img.shields.io/badge/Node.js-22-green)
-![Express](https://img.shields.io/badge/Express-4.x-black)
+![Express.js](https://img.shields.io/badge/Express.js-4.x-black)
 ![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-green)
 ![JWT](https://img.shields.io/badge/JWT-Authentication-blue)
+![Cloudinary](https://img.shields.io/badge/Cloudinary-Image%20Storage-blue)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
+
 
 A **production-ready Expense Manager REST API** built with **Node.js**, **Express.js**, and **MongoDB Atlas**.
 
@@ -21,9 +23,8 @@ This project demonstrates modern backend development practices including secure 
 - Installation
 - Environment Variables
 - API Endpoints
-- Sample Request Bodies
-- Sample Responses
 - Security
+- Project Highlights
 - Future Improvements
 - Contributing
 - License
@@ -36,7 +37,7 @@ This project demonstrates modern backend development practices including secure 
 ## Authentication
 
 - User Registration
-- Login
+- Secure Login
 - JWT Authentication
 - Password Hashing (bcrypt)
 - Email OTP Verification
@@ -44,29 +45,71 @@ This project demonstrates modern backend development practices including secure 
 - Forgot Password
 - Reset Password
 
+
 ## Expense Management
 
 - Create Expense
-- Get All Expenses
-- Get Expense by ID
 - Update Expense
 - Delete Expense
-- Receipt Image Upload
-- Receipt URL Generation
+- Get Expense by ID
+- Get All Expenses
+- Pagination
+- Searching
+- Category Filtering
+- Sorting
+- Receipt Upload
+- Cloudinary Image Storage
+
+## 👤 User Profile
+
+- View User Profile
+- Update User Profile
+- Send OTP for Password Change
+- Change Password
+- Delete User Account
+- JWT Protected Profile Routes
+
+## ✈️ Expense Trips
+
+- Create Trip
+- Update Trip
+- Delete Trip
+- View Trips
+- Associate Expenses with Trips
+
+## 📊 Dashboard APIs
+
+- Total Expenses
+- Total Expense Amount
+- Highest Expense
+- Average Expense
+- Monthly Expense Statistics
+- Category-wise Statistics
+- Recent Expenses
+
 
 ## Validation
 
 - Joi Validation
 - Meaningful Error Messages
 
+## 📧 Email Services
+
+- OTP Verification Emails
+- Password Reset Emails
+- Reusable Email Service
+
+
 ## Security
 
-- JWT
+- JWT Authentication
+- bcrypt Password Hashing
 - Helmet
 - CORS
 - express-rate-limit
 - express-mongo-sanitize
-- bcrypt Password Hashing
+- Joi Validation
+- Centralized Error Handling
 
 ## Other
 
@@ -82,35 +125,61 @@ This project demonstrates modern backend development practices including secure 
 # 🛠 Tech Stack
 
 | Category | Technologies |
-|-----------|-------------|
+|----------|--------------|
 | Runtime | Node.js |
 | Framework | Express.js |
 | Database | MongoDB Atlas |
 | ODM | Mongoose |
 | Authentication | JWT, bcrypt |
 | Validation | Joi |
-| Uploads | Multer |
+| Uploads | Multer, Cloudinary |
 | Email | Nodemailer |
-| Security | Helmet, CORS, Rate Limiter, Mongo Sanitize |
+| Security | Helmet, CORS, express-rate-limit, express-mongo-sanitize |
 
 ---
 
 # 📁 Project Structure
 
 ```text
-expense-manager-api/
+expense-manager-backend/
+│
 ├── config/
-├── controllers/
-├── helpers/
+│   ├── cloudinary.js
+│   ├── db.js
+│   └── mailer.js
+│
+├── controller/
+│   ├── expenseController.js
+│   ├── ExpenseTripController.js
+│   └── userController.js
+│
 ├── middleware/
-├── models/
-├── routes/
+│   ├── asyncHandler.js
+│   ├── authMiddleware.js
+│   ├── errorHandler.js
+│   ├── expensemiddleware.js
+│   ├── tripMiddleware.js
+│   └── uploadmiddleware.js
+│
+├── model/
+│   ├── Expense.js
+│   ├── ExpenseTrip.js
+│   └── User.js
+│
+├── router/
+│   ├── expenseRoute.js
+│   ├── expenseTripRouter.js
+│   └── userRouter.js
+│
+├── services/
+│   └── emailService.js
+│
 ├── uploads/
+│
 ├── .env.example
 ├── .gitignore
 ├── app.js
 ├── package.json
-├── package-lock.json
 └── README.md
 ```
 
@@ -153,10 +222,13 @@ nodemon app.js
 | Variable | Description |
 |----------|-------------|
 | PORT | Server Port |
-| MONGO_URI | MongoDB Atlas Connection |
+| MONGO_URI | MongoDB Atlas Connection String |
 | JWT_SECRET | JWT Secret |
 | EMAIL_USER | Gmail Address |
 | EMAIL_PASS | Gmail App Password |
+| CLOUDINARY_CLOUD_NAME | Cloudinary Cloud Name |
+| CLOUDINARY_API_KEY | Cloudinary API Key |
+| CLOUDINARY_API_SECRET | Cloudinary API Secret |
 
 ---
 
@@ -166,31 +238,61 @@ nodemon app.js
 
 | Method | Endpoint |
 |---------|----------|
-| POST | /signup |
-| POST | /login |
-| POST | /verify-otp |
-| POST | /resend-otp |
-| POST | /forgot-password |
-| POST | /reset-password |
+| POST | /user/signup |
+| POST | /user/login |
+| POST | /user/verifyotp |
+| POST | /user/resendotp |
+| POST | /user/forgotpassword |
+| POST | /user/resetpassword |
+
+---
+
+## User Profile
+
+| Method | Endpoint |
+|---------|----------|
+| GET | /user/profile |
+| PUT | /user/profile |
+| POST | /user/change-password/send-otp |
+| PUT | /user/change-password |
+| DELETE | /user/delete |
+
+---
 
 ## Expenses
 
 | Method | Endpoint |
 |---------|----------|
-| GET | /expenses |
-| GET | /expenses/:id |
-| POST | /expenses |
-| PUT | /expenses/:id |
-| DELETE | /expenses/:id |
+| GET | /expense/expenses |
+| GET | /expense/expenses/:id |
+| POST | /expense/expenses |
+| PUT | /expense/expenses/:id |
+| DELETE | /expense/expenses/:id |
+| GET | /expense/dashboard |
 
+---
+
+## Expense Trips
+
+| Method | Endpoint |
+|---------|----------|
+| GET | /trip |
+| GET | /trip/:id |
+| POST | /trip |
+| PUT | /trip/:id |
+| DELETE | /trip/:id |
+| GET | /trip/dashboard/:id |
 ---
 
 # 📨 Sample Request
 
 ```json
 {
-  "name": "Groceries",
-  "amount": 2500
+  "name": "Fuel",
+  "amount": 3000,
+  "category" : "Travel",
+  "receipt" : "Image of the receipt ",
+  "description" : "Fast petrol fuel for sports car"
 }
 ```
 
@@ -200,16 +302,24 @@ nodemon app.js
 
 ```json
 {
-  "success": true,
-  "message": "Expense added successfully.",
-  "expense": {
-    "_id": "68872dc4b3d5",
-    "name": "Groceries",
-    "amount": 2500,
-    "receipt": "uploads/bill.png",
-    "receiptUrl": "http://localhost:3000/uploads/bill.png"
-  }
+    "success": true,
+    "message": "Expense added successfully",
+    "expense": {
+        "name": "Fuel",
+        "amount": 3000,
+        "receipt": "https://res.cloudinary.com/f1pf6ynr/image/upload/v1785452612/expense_receipts/1785452609033-bank.png",
+        "receiptPublicId": "expense_receipts/1785452609033-bank",
+        "category": "Travel",
+        "description": "Fast petrol fuel for sports car",
+        "trip": null,
+        "user": "6a6a9b37184e49e4acb41824",
+        "_id": "6a6bd844ab83c2393ac91f20",
+        "createdAt": "2026-07-30T23:03:32.056Z",
+        "updatedAt": "2026-07-30T23:03:32.056Z",
+        "__v": 0
+    }
 }
+
 ```
 
 ## Login
@@ -218,7 +328,12 @@ nodemon app.js
 {
   "success": true,
   "message": "Login successful.",
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+      "id": "6a6be740df420097b08b1b16",
+      "name": "Kalpana",
+      "email": "kalpanapawar2711@gmail.com"
+  }
 }
 ```
 
@@ -259,15 +374,27 @@ nodemon app.js
 
 ---
 
+# 🌟 Project Highlights
+
+- RESTful API Design
+- Modular Folder Structure
+- JWT Authentication
+- OTP Email Verification
+- Password Recovery
+- Expense Management
+- Expense Trip Management
+- Cloudinary Image Upload
+- Dashboard Aggregation APIs
+- Secure Middleware
+- Production-ready Error Handling
+
 # 📈 Future Improvements
 
-- [ ] Cloudinary Integration
-- [ ] Docker Support
-- [ ] Swagger Documentation
-- [ ] Dashboard Analytics
-- [ ] Unit Testing
-- [ ] CI/CD Pipeline
-- [ ] React Frontend
+- Swagger / OpenAPI Documentation
+- Docker Support
+- Unit Testing
+- Integration Testing
+- CI/CD Pipeline
 
 ---
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { FaCloudUploadAlt, FaTrash } from "react-icons/fa";
 import {
   addExpense,
   updateExpense,
@@ -19,34 +20,65 @@ export default function ExpenseFormModal({
     receipt: null,
 });
 
+  const [preview, setPreview] = useState("");
+
   useEffect(() => {
-    if (expense) {
-      setFormData({
-        name: expense.name || "",
-        amount: expense.amount || "",
-        category: expense.category || "",
-        description: expense.description || "",
-        receipt: null,
-      });
-    } else {
-      setFormData({
-        name: "",
-        amount: "",
-        category: "",
-        description: "",
-        receipt: null,
-      });
-    }
-  }, [expense, isOpen]);
+  if (expense) {
+    setFormData({
+      name: expense.name || "",
+      amount: expense.amount || "",
+      category: expense.category || "",
+      description: expense.description || "",
+      receipt: null,
+    });
+
+    setPreview(expense.receipt || "");
+  } else {
+    setFormData({
+      name: "",
+      amount: "",
+      category: "",
+      description: "",
+      receipt: null,
+    });
+
+    setPreview("");
+  }
+}, [expense, isOpen]);
 
   const handleChange = (e) => {
-    const { name, value, files } = e.target;
+  const { name, value, files } = e.target;
+
+  if (files) {
+    const file = files[0];
 
     setFormData((prev) => ({
       ...prev,
-      [name]: files ? files[0] : value,
+      receipt: file,
     }));
-  };
+
+    if (file) {
+      setPreview(URL.createObjectURL(file));
+    }
+
+    return;
+  }
+
+  setFormData((prev) => ({
+    ...prev,
+    [name]: value,
+  }));
+};
+
+
+  function removeReceipt() {
+  setPreview("");
+
+  setFormData((prev) => ({
+    ...prev,
+    receipt: null,
+  }));
+}
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -268,28 +300,98 @@ export default function ExpenseFormModal({
 </div>
 
         {/* Receipt */}
+
+<div>
+  <label className="mb-2 block text-sm font-semibold text-gray-700">
+    Receipt (Optional)
+  </label>
+
+  {!preview ? (
+    <label
+      className="
+        flex
+        cursor-pointer
+        flex-col
+        items-center
+        justify-center
+        rounded-2xl
+        border-2
+        border-dashed
+        border-gray-300
+        bg-gray-50
+        p-8
+        transition
+        hover:border-blue-500
+        hover:bg-blue-50
+      "
+    >
+      <FaCloudUploadAlt
+        size={42}
+        className="text-blue-600"
+      />
+
+      <p className="mt-4 font-semibold text-gray-700">
+        Click to upload receipt
+      </p>
+
+      <p className="mt-1 text-sm text-gray-500">
+        JPG, PNG, JPEG
+      </p>
+
+      <input
+        type="file"
+        name="receipt"
+        accept="image/*"
+        onChange={handleChange}
+        className="hidden"
+      />
+    </label>
+  ) : (
+    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-gray-50">
+      <img
+        src={preview}
+        alt="Receipt Preview"
+        className="h-72 w-full object-contain bg-white"
+      />
+
+      <div className="flex items-center justify-between p-4">
         <div>
+          <p className="font-semibold text-gray-700">
+            {formData.receipt
+              ? formData.receipt.name
+              : "Current Receipt"}
+          </p>
 
-          <label className="mb-2 block text-sm font-semibold text-gray-700">
-            Receipt (Optional)
-          </label>
+          <p className="text-sm text-gray-500">
+            Preview
+          </p>
+        </div>
 
-          <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-6 text-center hover:border-blue-500 hover:bg-blue-50 transition">
+        <div className="flex gap-2">
+          <label className="cursor-pointer rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">
+            Change
 
             <input
               type="file"
               name="receipt"
+              accept="image/*"
               onChange={handleChange}
-              className="w-full cursor-pointer"
+              className="hidden"
             />
+          </label>
 
-            <p className="mt-3 text-sm text-gray-500">
-              Upload a receipt image (JPG, PNG)
-            </p>
-
-          </div>
-
+          <button
+            type="button"
+            onClick={removeReceipt}
+            className="rounded-xl bg-red-100 p-3 text-red-600 transition hover:bg-red-200"
+          >
+            <FaTrash />
+          </button>
         </div>
+      </div>
+    </div>
+  )}
+</div>
 
         {/* Footer */}
         <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
